@@ -5,13 +5,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.ververica.cdc.connectors.mysql.MySQLSource;
 import com.alibaba.ververica.cdc.debezium.DebeziumDeserializationSchema;
 import com.alibaba.ververica.cdc.debezium.DebeziumSourceFunction;
+import com.ytjj.qmyx.bean.TableProcess;
 import com.ytjj.qmyx.utils.MyKafkaUtil;
 import io.debezium.data.Envelope;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.streaming.api.CheckpointingMode;
+import org.apache.flink.streaming.api.datastream.BroadcastStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -106,10 +109,11 @@ public class ProcessMysqlBinlog {
                 .build();
 
         DataStreamSource<String> tableProcessDS = env.addSource(sourceFunction);
+//将配置流进行广播
+        MapStateDescriptor<String, TableProcess> mapStateDescriptor =
+                new MapStateDescriptor<>("table-process-state", String.class, TableProcess.class);
 
-
-
-
+        BroadcastStream<String> broadcastStream = tableProcessDS.broadcast(mapStateDescriptor);
 
 
     }
